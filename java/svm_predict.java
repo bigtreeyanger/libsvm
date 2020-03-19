@@ -18,7 +18,7 @@ class svm_predict {
 
 	private static svm_print_interface svm_print_string = svm_print_stdout;
 
-	static void info(String s)
+	static void info(String s) 
 	{
 		svm_print_string.print(s);
 	}
@@ -38,7 +38,7 @@ class svm_predict {
 		int correct = 0;
 		int total = 0;
 		double error = 0;
-		double sump = 0, sumt = 0, sumpp = 0, sumtt = 0, sumpt = 0;
+		double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
 
 		int svm_type=svm.svm_get_svm_type(model);
 		int nr_class=svm.svm_get_nr_class(model);
@@ -69,7 +69,7 @@ class svm_predict {
 
 			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
 
-			double target_label = atof(st.nextToken());
+			double target = atof(st.nextToken());
 			int m = st.countTokens()/2;
 			svm_node[] x = new svm_node[m];
 			for(int j=0;j<m;j++)
@@ -79,29 +79,29 @@ class svm_predict {
 				x[j].value = atof(st.nextToken());
 			}
 
-			double predict_label;
+			double v;
 			if (predict_probability==1 && (svm_type==svm_parameter.C_SVC || svm_type==svm_parameter.NU_SVC))
 			{
-				predict_label = svm.svm_predict_probability(model,x,prob_estimates);
-				output.writeBytes(predict_label+" ");
+				v = svm.svm_predict_probability(model,x,prob_estimates);
+				output.writeBytes(v+" ");
 				for(int j=0;j<nr_class;j++)
 					output.writeBytes(prob_estimates[j]+" ");
 				output.writeBytes("\n");
 			}
 			else
 			{
-				predict_label = svm.svm_predict(model,x);
-				output.writeBytes(predict_label+"\n");
+				v = svm.svm_predict(model,x);
+				output.writeBytes(v+"\n");
 			}
 
-			if(predict_label == target_label)
+			if(v == target)
 				++correct;
-			error += (predict_label-target_label)*(predict_label-target_label);
-			sump += predict_label;
-			sumt += target_label;
-			sumpp += predict_label*predict_label;
-			sumtt += target_label*target_label;
-			sumpt += predict_label*target_label;
+			error += (v-target)*(v-target);
+			sumv += v;
+			sumy += target;
+			sumvv += v*v;
+			sumyy += target*target;
+			sumvy += v*target;
 			++total;
 		}
 		if(svm_type == svm_parameter.EPSILON_SVR ||
@@ -109,8 +109,8 @@ class svm_predict {
 		{
 			svm_predict.info("Mean squared error = "+error/total+" (regression)\n");
 			svm_predict.info("Squared correlation coefficient = "+
-				 ((total*sumpt-sump*sumt)*(total*sumpt-sump*sumt))/
-				 ((total*sumpp-sump*sump)*(total*sumtt-sumt*sumt))+
+				 ((total*sumvy-sumv*sumy)*(total*sumvy-sumv*sumy))/
+				 ((total*sumvv-sumv*sumv)*(total*sumyy-sumy*sumy))+
 				 " (regression)\n");
 		}
 		else
@@ -153,7 +153,7 @@ class svm_predict {
 		}
 		if(i>=argv.length-2)
 			exit_with_help();
-		try
+		try 
 		{
 			BufferedReader input = new BufferedReader(new FileReader(argv[i]));
 			DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(argv[i+2])));
@@ -181,12 +181,12 @@ class svm_predict {
 			predict(input,output,model,predict_probability);
 			input.close();
 			output.close();
-		}
-		catch(FileNotFoundException e)
+		} 
+		catch(FileNotFoundException e) 
 		{
 			exit_with_help();
 		}
-		catch(ArrayIndexOutOfBoundsException e)
+		catch(ArrayIndexOutOfBoundsException e) 
 		{
 			exit_with_help();
 		}
