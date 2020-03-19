@@ -37,7 +37,8 @@ static inline double powi(double base, int times)
 #define INF HUGE_VAL
 #define TAU 1e-12
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
-
+#define C_N 5
+#define C_P 1 
 static void print_string_stdout(const char *s)
 {
 	fputs(s,stdout);
@@ -1527,6 +1528,94 @@ static void solve_nu_svc(
 	delete[] zeros;
 }
 
+static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
+	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn)
+{
+	int l = prob->l;
+	double *minus_y = new double[l];
+	schar *y = new schar[l];
+	int i;
+    for(i=0; i<l; i++){
+		if(prob->y[i] > 0) y[i] = +1; else y[i] = -1;
+
+    }
+    SVC_Q Q = SVC_Q(*prob, *param, y);
+    int p_samples=0;
+    int n_samples=0;
+	for(i=0;i<l;i++)
+	{
+        minus_y[i] = -0.5*Q.get_QD()[i]*y[i];
+        if (y[i]>0)
+            p_samples++;
+        else
+            n_samples++;
+	}
+
+    double sum_alpha = 1;
+    for (i=0; i<l; i++){
+        if (y[i]>0){
+            alpha[i] = min(Cp, sum_alpha);
+            sum_alpha -= alpha[i];
+            if (alpha[i]<0) info("bad alpha initialization\n");
+        }
+        else
+            alpha[i] = 0;
+    }
+    info("num of p samples %d, n samples %d\n", p_samples, n_samples);
+    info("solving SVDD Cp=%f, Cn=%f\n", Cp, Cn);
+	Solver s;
+	s.Solve(l, Q, minus_y, y,
+		alpha, Cp, Cn, param->eps, si, param->shrinking);
+
+    int p_bsv=0; int p_sv=0;
+    int n_bsv=0; int n_sv=0;
+	for(i=0;i<l;i++){
+	    if (alpha[i]>0){
+            if (y[i]>0){
+                p_sv++;
+                if (alpha[i]<Cp) p_bsv++;
+            }
+            else{
+                n_sv++;
+                if (alpha[i]<Cn) n_bsv++;
+            }
+        }
+        alpha[i] *= y[i];
+    }
+	sum_alpha=0;
+	for(i=0;i<l;i++)
+		sum_alpha += alpha[i];
+    info("sv result:\n"); 
+    info("positive samples, total sv %d, total sv on boudary %d\n", p_sv, p_bsv); 
+    info("negative samples, total sv %d, total sv on boudary %d\n", n_sv, n_bsv); 
+    info("alpha sum %f\n", sum_alpha);
+
+    //if (Cp==Cn)
+	//   	info("nu = %f\n", sum_alpha/(Cp*prob->l));
+   double radius_square = 0;
+   for(int i=0; i<l; i++){
+        if (((alpha[i]>0)&&(alpha[i]<Cp))||((alpha[i]<0)&&(fabs(alpha[i])<Cn))){
+            svm_node *bsv = prob->x[i];
+            radius_square = Kernel::k_function(bsv, bsv, *param);
+            for(int j=0; j<l; j++){
+                if (alpha[j]==0) continue;
+                radius_square -= 2* alpha[j]*Kernel::k_function(bsv, prob->x[j], *param);
+                for(int m=0; m<l; m++){
+                    if (alpha[m]==0) continue;
+                    radius_square += alpha[j]*alpha[m]*Kernel::k_function(prob->x[j], prob->x[m], *param);
+                }
+            }
+            break;
+        }
+   }
+    info("radius square is %f\n\n", radius_square);
+
+	delete[] minus_y;
+	delete[] y;
+    
+}
+
+	
 static void solve_one_class(
 	const svm_problem *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
@@ -1655,7 +1744,10 @@ static decision_function svm_train_one(
 		case C_SVC:
 			solve_c_svc(prob,param,alpha,&si,Cp,Cn);
 			break;
-		case NU_SVC:
+        case SVDD:
+            solve_SVDD(prob, param, alpha, &si, Cp, Cn);
+            break;
+        case NU_SVC:
 			solve_nu_svc(prob,param,alpha,&si);
 			break;
 		case ONE_CLASS:
@@ -2097,7 +2189,8 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
-	   param->svm_type == NU_SVR)
+	   param->svm_type == NU_SVR ||
+       param->svm_type == SVDD)
 	{
 		// regression or one-class-svm
 		model->nr_class = 2;
@@ -2105,7 +2198,6 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		model->nSV = NULL;
 		model->probA = NULL; model->probB = NULL;
 		model->sv_coef = Malloc(double *,1);
-
 		if(param->probability &&
 		   (param->svm_type == EPSILON_SVR ||
 		    param->svm_type == NU_SVR))
@@ -2113,8 +2205,14 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 			model->probA = Malloc(double,1);
 			model->probA[0] = svm_svr_probability(prob,param);
 		}
-
-		decision_function f = svm_train_one(prob,param,0,0);
+        decision_function f;
+        if (param->svm_type == SVDD){
+            double C_n = C_N;
+            double C_p = C_P;
+            f = svm_train_one(prob, param, C_p, C_n);
+        }
+        else
+		    f = svm_train_one(prob,param,0,0);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
 
@@ -2459,7 +2557,7 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 
 int svm_get_svm_type(const svm_model *model)
 {
-	return model->param.svm_type;
+    return model->param.svm_type;
 }
 
 int svm_get_nr_class(const svm_model *model)
@@ -2500,12 +2598,12 @@ double svm_get_svr_probability(const svm_model *model)
 
 double svm_predict_values(const svm_model *model, const svm_node *x, double* dec_values)
 {
-	int i;
+    int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 	{
-		double *sv_coef = model->sv_coef[0];
+        double *sv_coef = model->sv_coef[0];
 		double sum = 0;
 		for(i=0;i<model->l;i++)
 			sum += sv_coef[i] * Kernel::k_function(x,model->SV[i],model->param);
@@ -2517,6 +2615,31 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
 		else
 			return sum;
 	}
+    else if (model->param.svm_type == SVDD){
+       // Compute distance from center of hypersphere
+       // new_rho = (R**2-a^T*Q*a)
+       double *sv_coef = model->sv_coef[0];
+       double new_rho = 0;
+       double Cp = C_P;
+       double Cn = C_N;
+       for(int i=0; i<model->l; i++){
+            if (((sv_coef[i]>0)&&(sv_coef[i]<Cp))||((sv_coef[i]<0)&&(fabs(sv_coef[i])<Cn))){
+                svm_node *bsv = model->SV[i];
+                new_rho = Kernel::k_function(bsv, bsv, model->param);
+                for(int j=0; j<model->l; j++){
+                    new_rho -= 2* sv_coef[j]*Kernel::k_function(bsv, model->SV[j], model->param);
+                }
+                break;
+            }
+       }
+       //new_rho = -2*model->rho[0]; // this method is used in libsvm SVDD
+       double tmp_value = Kernel::k_function(x, x, model->param); //K(x,x) 
+       for(int i=0; i<model->l; i++){
+           tmp_value -= 2 * sv_coef[i] * Kernel::k_function(x,model->SV[i],model->param); //-2*\sum{\alpha_{i}*K(x_{i}, x)}
+       }
+       *dec_values = new_rho - tmp_value;
+       return (*dec_values>=0?1:-1);
+    }
 	else
 	{
 		int nr_class = model->nr_class;
@@ -2580,6 +2703,7 @@ double svm_predict(const svm_model *model, const svm_node *x)
 	double *dec_values;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
+	   model->param.svm_type == SVDD ||
 	   model->param.svm_type == NU_SVR)
 		dec_values = Malloc(double, 1);
 	else
@@ -2636,7 +2760,7 @@ double svm_predict_probability(
 
 static const char *svm_type_table[] =
 {
-	"c_svc","nu_svc","one_class","epsilon_svr","nu_svr",NULL
+	"c_svc","nu_svc","one_class","svdd", "epsilon_svr","nu_svr",NULL
 };
 
 static const char *kernel_type_table[]=
@@ -3045,12 +3169,13 @@ void svm_destroy_param(svm_parameter* param)
 
 const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *param)
 {
-	// svm_type
+    // svm_type
 
 	int svm_type = param->svm_type;
 	if(svm_type != C_SVC &&
 	   svm_type != NU_SVC &&
 	   svm_type != ONE_CLASS &&
+	   svm_type != SVDD &&
 	   svm_type != EPSILON_SVR &&
 	   svm_type != NU_SVR)
 		return "unknown svm type";

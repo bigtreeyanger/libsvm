@@ -22,7 +22,7 @@ struct svm_problem
 	struct svm_node **x;
 };
 
-enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR };	/* svm_type */
+enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR, SVDD };	/* svm_type */
 enum { LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED }; /* kernel_type */
 
 struct svm_parameter
@@ -37,7 +37,8 @@ struct svm_parameter
 	double cache_size; /* in MB */
 	double eps;	/* stopping criteria */
 	double C;	/* for C_SVC, EPSILON_SVR and NU_SVR */
-	int nr_weight;		/* for C_SVC */
+	//double C_n; /* for SVDD, penality for negative samples */
+    int nr_weight;		/* for C_SVC */
 	int *weight_label;	/* for C_SVC */
 	double* weight;		/* for C_SVC */
 	double nu;	/* for NU_SVC, ONE_CLASS, and NU_SVR */
@@ -54,7 +55,9 @@ struct svm_model
 	struct svm_parameter param;	/* parameter */
 	int nr_class;		/* number of classes, = 2 in regression/one class svm */
 	int l;			/* total #SV */
-	struct svm_node **SV;		/* SVs (SV[l]) */
+	//double Cp;   /* penalty term for SVDD */
+    //double Cn;
+    struct svm_node **SV;		/* SVs (SV[l]) */
 	double **sv_coef;	/* coefficients for SVs in decision functions (sv_coef[k-1][l]) */
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
 	double *probA;		/* pariwise probability information */
