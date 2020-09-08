@@ -38,7 +38,7 @@ static inline double powi(double base, int times)
 #define TAU 1e-12
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 #define C_N 5
-#define C_P 1 
+#define C_P 0.05 
 static void print_string_stdout(const char *s)
 {
 	fputs(s,stdout);
@@ -1593,6 +1593,7 @@ static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
     //if (Cp==Cn)
 	//   	info("nu = %f\n", sum_alpha/(Cp*prob->l));
    double radius_square = 0;
+   int cnt = 0;
    for(int i=0; i<l; i++){
         if (((alpha[i]>0)&&(alpha[i]<Cp))||((alpha[i]<0)&&(fabs(alpha[i])<Cn))){
             svm_node *bsv = prob->x[i];
@@ -1605,10 +1606,12 @@ static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
                     radius_square += alpha[j]*alpha[m]*Kernel::k_function(prob->x[j], prob->x[m], *param);
                 }
             }
+            cnt++;
+            info("radius square %d is %f\n\n", cnt, radius_square);
+            if (cnt==2)
             break;
         }
    }
-    info("radius square is %f\n\n", radius_square);
 
 	delete[] minus_y;
 	delete[] y;
