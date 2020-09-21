@@ -2211,7 +2211,8 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
         decision_function f;
         if (param->svm_type == SVDD){
             double C_n = C_N;
-            double C_p = C_P;
+            //double C_p = C_P;
+            double C_p = param->C;
             f = svm_train_one(prob, param, C_p, C_n);
         }
         else
@@ -2623,7 +2624,8 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
        // new_rho = (R**2-a^T*Q*a)
        double *sv_coef = model->sv_coef[0];
        double new_rho = 0;
-       double Cp = C_P;
+       //double Cp = C_P;
+       double Cp = model->param.C;
        double Cn = C_N;
        for(int i=0; i<model->l; i++){
             if (((sv_coef[i]>0)&&(sv_coef[i]<Cp))||((sv_coef[i]<0)&&(fabs(sv_coef[i])<Cn))){
