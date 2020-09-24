@@ -225,10 +225,10 @@ class svm_problem(Structure):
 
 class svm_parameter(Structure):
         _names = ["svm_type", "kernel_type", "degree", "gamma", "coef0",
-                        "cache_size", "eps", "C", "nr_weight", "weight_label", "weight",
+                        "cache_size", "eps", "C", "Cn", "nr_weight", "weight_label", "weight",
                         "nu", "p", "shrinking", "probability"]
         _types = [c_int, c_int, c_int, c_double, c_double,
-                        c_double, c_double, c_double, c_int, POINTER(c_int), POINTER(c_double),
+                        c_double, c_double, c_double, c_double, c_int, POINTER(c_int), POINTER(c_double),
                         c_double, c_double, c_int, c_int]
         _fields_ = genFields(_names, _types)
 
@@ -256,6 +256,7 @@ class svm_parameter(Structure):
                 self.nu = 0.5
                 self.cache_size = 100
                 self.C = 1
+                self.Cn = 0
                 self.eps = 0.001
                 self.p = 0.1
                 self.shrinking = 1
@@ -305,6 +306,9 @@ class svm_parameter(Structure):
                         elif argv[i] == "-c":
                                 i = i + 1
                                 self.C = float(argv[i])
+                        elif argv[i] == "-cn":
+                                i = i + 1
+                                self.Cn = float(argv[i])
                         elif argv[i] == "-e":
                                 i = i + 1
                                 self.eps = float(argv[i])
@@ -333,7 +337,6 @@ class svm_parameter(Structure):
                         else:
                                 raise ValueError("Wrong options")
                         i += 1
-
                 libsvm.svm_set_print_string_function(self.print_func)
                 self.weight_label = (c_int*self.nr_weight)()
                 self.weight = (c_double*self.nr_weight)()

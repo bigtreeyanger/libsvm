@@ -74,7 +74,8 @@ def svm_train(arg1, arg2=None, arg3=None):
             -d degree : set degree in kernel function (default 3)
             -g gamma : set gamma in kernel function (default 1/num_features)
             -r coef0 : set coef0 in kernel function (default 0)
-            -c cost : set the parameter C of C-SVC, epsilon-SVR, and nu-SVR (default 1)
+            -c cost : set the parameter C of C-SVC, epsilon-SVR, nu-SVR and SVDD (default 1)
+            -cn negative cost : set the parameter C for negative samples in SVDD (default 0)
             -n nu : set the parameter nu of nu-SVC, one-class SVM, and nu-SVR (default 0.5)
             -p epsilon : set the epsilon in loss function of epsilon-SVR (default 0.1)
             -m cachesize : set cache memory size in MB (default 100)
@@ -262,5 +263,6 @@ def svm_predict(y, x, m, options=""):
         else:
                 info("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(round(nr_instance*ACC/100)), nr_instance))
 
-        # TODO: modified by yang, add dec_values as return variable
-        return pred_labels, project_values, (ACC, MSE, SCC), pred_values
+        # TODO: modified by yang, add project_values as return variable
+        #return pred_labels, project_values, (ACC, MSE, SCC), pred_values
+        return pred_labels, (ACC, MSE, SCC), pred_values
