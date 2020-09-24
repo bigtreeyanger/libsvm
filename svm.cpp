@@ -37,8 +37,6 @@ static inline double powi(double base, int times)
 #define INF HUGE_VAL
 #define TAU 1e-12
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
-#define C_N 5
-#define C_P 0.05 
 static void print_string_stdout(const char *s)
 {
 	fputs(s,stdout);
@@ -2210,8 +2208,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		}
         decision_function f;
         if (param->svm_type == SVDD){
-            double C_n = C_N;
-            //double C_p = C_P;
+            double C_n = param->Cn;
             double C_p = param->C;
             f = svm_train_one(prob, param, C_p, C_n);
         }
@@ -2624,9 +2621,8 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
        // new_rho = (R**2-a^T*Q*a)
        double *sv_coef = model->sv_coef[0];
        double new_rho = 0;
-       //double Cp = C_P;
        double Cp = model->param.C;
-       double Cn = C_N;
+       double Cn = model->param.Cn;
        for(int i=0; i<model->l; i++){
             if (((sv_coef[i]>0)&&(sv_coef[i]<Cp))||((sv_coef[i]<0)&&(fabs(sv_coef[i])<Cn))){
                 svm_node *bsv = model->SV[i];
@@ -3175,7 +3171,6 @@ void svm_destroy_param(svm_parameter* param)
 const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *param)
 {
     // svm_type
-
 	int svm_type = param->svm_type;
 	if(svm_type != C_SVC &&
 	   svm_type != NU_SVC &&
