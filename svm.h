@@ -37,7 +37,7 @@ struct svm_parameter
 	double cache_size; /* in MB */
 	double eps;	/* stopping criteria */
 	double C;	/* for C_SVC, EPSILON_SVR and NU_SVR */
-	//double C_n; /* for SVDD, penality for negative samples */
+	double Cn; /* for SVDD, penality for negative samples */
     int nr_weight;		/* for C_SVC */
 	int *weight_label;	/* for C_SVC */
 	double* weight;		/* for C_SVC */
