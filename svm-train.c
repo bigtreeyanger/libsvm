@@ -19,6 +19,7 @@ void exit_with_help()
 	"	2 -- one-class SVM\n"
 	"	3 -- epsilon-SVR	(regression)\n"
 	"	4 -- nu-SVR		(regression)\n"
+	"	5 -- SVDD		(without negative samples, C should be between 1/num_instances and 1)\n"
 	"-t kernel_type : set type of kernel function (default 2)\n"
 	"	0 -- linear: u'*v\n"
 	"	1 -- polynomial: (gamma*u'*v + coef0)^degree\n"
@@ -360,6 +361,15 @@ void read_problem(const char *filename)
 
 	if(param.gamma == 0 && max_index > 0)
 		param.gamma = 1.0/max_index;
+
+    if(param.C == 0)
+    {
+        if (param.svm_type == SVDD && prob.l >0)
+            param.C = 2.0/prob.l;
+        else
+            param.C = 1;
+    }
+
 
 	if(param.kernel_type == PRECOMPUTED)
 		for(i=0;i<prob.l;i++)
