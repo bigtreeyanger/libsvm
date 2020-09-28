@@ -264,5 +264,5 @@ def svm_predict(y, x, m, options=""):
                 info("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(round(nr_instance*ACC/100)), nr_instance))
 
         # TODO: modified by yang, add project_values as return variable
-        #return pred_labels, project_values, (ACC, MSE, SCC), pred_values
-        return pred_labels, (ACC, MSE, SCC), pred_values
+        return pred_labels, project_values, (ACC, MSE, SCC), pred_values
+        #return pred_labels, (ACC, MSE, SCC), pred_values
