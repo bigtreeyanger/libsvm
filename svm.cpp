@@ -2619,6 +2619,7 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
     else if (model->param.svm_type == SVDD){
        // Compute distance from center of hypersphere
        // new_rho = (R**2-a^T*Q*a)
+       
        double *sv_coef = model->sv_coef[0];
        double new_rho = 0;
        double Cp = model->param.C;
@@ -2709,7 +2710,9 @@ double svm_predict(const svm_model *model, const svm_node *x)
 		dec_values = Malloc(double, 1);
 	else
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-	double pred_result = svm_predict_values(model, x, dec_values);
+	if (model->param.svm_type == SVDD)
+       info("SVDD predict Cp: %f, Cn:%f\n", model->param.C, model->param.Cn);
+    double pred_result = svm_predict_values(model, x, dec_values);
 	free(dec_values);
 	return pred_result;
 }
@@ -2793,6 +2796,10 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
 
 	if(param.kernel_type == POLY || param.kernel_type == SIGMOID)
 		fprintf(fp,"coef0 %.17g\n", param.coef0);
+
+    fprintf(fp,"C %.17g\n", param.C);
+    fprintf(fp,"Cn %.17g\n", param.Cn);
+
 
 	int nr_class = model->nr_class;
 	int l = model->l;
@@ -2961,7 +2968,16 @@ bool read_model_header(FILE *fp, svm_model* model)
 			for(int i=0;i<n;i++)
 				FSCANF(fp,"%lf",&model->rho[i]);
 		}
-		else if(strcmp(cmd,"label")==0)
+        else if(strcmp(cmd, "C")==0)
+        {
+            FSCANF(fp, "%lf", &model->param.C);
+        }
+        else if(strcmp(cmd, "Cn")==0)
+        {
+            FSCANF(fp, "%lf", &model->param.Cn);
+        }
+        
+        else if(strcmp(cmd,"label")==0)
 		{
 			int n = model->nr_class;
 			model->label = Malloc(int,n);
@@ -3029,6 +3045,7 @@ svm_model *svm_load_model(const char *model_file_name)
 	model->sv_indices = NULL;
 	model->label = NULL;
 	model->nSV = NULL;
+
 
 	// read header
 	if (!read_model_header(fp, model))
