@@ -243,15 +243,12 @@ def svm_predict(y, x, m, options=""):
                         else:
                                 xi, idx = gen_svm_nodearray(x[i], isKernel=(m.param.kernel_type == PRECOMPUTED))
                         label = libsvm.svm_predict_values(m, xi, dec_values)
-                        #TODO: modified by Yang
-                        v = dec_values[:1][0]
                         if(nr_class == 1):
                                 values = [1]
                         else:
                                 values = dec_values[:nr_classifier]
                         pred_labels += [label]
                         pred_values += [values]
-                        project_values += [v]
 
         if len(y) == 0:
                 y = [0] * nr_instance
@@ -261,8 +258,8 @@ def svm_predict(y, x, m, options=""):
                 info("Mean squared error = %g (regression)" % MSE)
                 info("Squared correlation coefficient = %g (regression)" % SCC)
         else:
-                info("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(round(nr_instance*ACC/100)), nr_instance))
+                #modified by yang: disabled printing 
+                pass
+                #info("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(round(nr_instance*ACC/100)), nr_instance))
 
-        # TODO: modified by yang, add project_values as return variable
-        return pred_labels, project_values, (ACC, MSE, SCC), pred_values
-        #return pred_labels, (ACC, MSE, SCC), pred_values
+        return pred_labels, (ACC, MSE, SCC), pred_values
