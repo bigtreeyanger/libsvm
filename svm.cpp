@@ -578,7 +578,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 			reconstruct_gradient();
 			// reset active set size and check
 			active_size = l;
-			info("*");
+			//info("*");
 			if(select_working_set(i,j)!=0)
 				break;
 			else
@@ -734,7 +734,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 			// reconstruct the whole gradient to calculate objective value
 			reconstruct_gradient();
 			active_size = l;
-			info("*");
+			//info("*");
 		}
 		fprintf(stderr,"\nWARNING: reaching max number of iterations\n");
 	}
@@ -770,7 +770,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	si->upper_bound_p = Cp;
 	si->upper_bound_n = Cn;
 
-	info("\noptimization finished, #iter = %d\n",iter);
+	//info("\noptimization finished, #iter = %d\n",iter);
 
 	delete[] p;
 	delete[] y;
@@ -943,7 +943,7 @@ void Solver::do_shrinking()
 		unshrink = true;
 		reconstruct_gradient();
 		active_size = l;
-		info("*");
+		//info("*");
 	}
 
 	for(i=0;i<active_size;i++)
@@ -1461,8 +1461,8 @@ static void solve_c_svc(
 	for(i=0;i<l;i++)
 		sum_alpha += alpha[i];
 
-	if (Cp==Cn)
-		info("nu = %f\n", sum_alpha/(Cp*prob->l));
+	//if (Cp==Cn)
+	//	info("nu = %f\n", sum_alpha/(Cp*prob->l));
 
 	for(i=0;i<l;i++)
 		alpha[i] *= y[i];
@@ -1512,7 +1512,7 @@ static void solve_nu_svc(
 		alpha, 1.0, 1.0, param->eps, si,  param->shrinking);
 	double r = si->r;
 
-	info("C = %f\n",1/r);
+	//info("C = %f\n",1/r);
 
 	for(i=0;i<l;i++)
 		alpha[i] *= y[i]/r;
@@ -1559,8 +1559,8 @@ static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
         else
             alpha[i] = 0;
     }
-    info("num of p samples %d, n samples %d\n", p_samples, n_samples);
-    info("solving SVDD Cp=%f, Cn=%f\n", Cp, Cn);
+    //info("SVDD: num of p samples %d, n samples %d\n", p_samples, n_samples);
+    //info("solving SVDD Cp=%f, Cn=%f\n", Cp, Cn);
 	Solver s;
 	s.Solve(l, Q, minus_y, y,
 		alpha, Cp, Cn, param->eps, si, param->shrinking);
@@ -1583,10 +1583,10 @@ static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
 	sum_alpha=0;
 	for(i=0;i<l;i++)
 		sum_alpha += alpha[i];
-    info("sv result:\n"); 
-    info("positive samples, total sv %d, total sv on boudary %d\n", p_sv, p_bsv); 
-    info("negative samples, total sv %d, total sv on boudary %d\n", n_sv, n_bsv); 
-    info("alpha sum %f\n", sum_alpha);
+    //info("sv result:\n"); 
+    //info("positive samples, total sv %d, total sv on boudary %d\n", p_sv, p_bsv); 
+    //info("negative samples, total sv %d, total sv on boudary %d\n", n_sv, n_bsv); 
+    //info("alpha sum %f\n", sum_alpha);
 
     //if (Cp==Cn)
 	//   	info("nu = %f\n", sum_alpha/(Cp*prob->l));
@@ -1605,7 +1605,7 @@ static void solve_SVDD(const svm_problem *prob, const svm_parameter *param,
                 }
             }
             cnt++;
-            info("radius square %d is %f\n\n", cnt, radius_square);
+            //info("radius square %d is %f\n\n", cnt, radius_square);
             if (cnt==2)
             break;
         }
@@ -1762,7 +1762,7 @@ static decision_function svm_train_one(
 			break;
 	}
 
-	info("obj = %f, rho = %f\n",si.obj,si.rho);
+	//info("obj = %f, rho = %f\n",si.obj,si.rho);
 
 	// output SVs
 
@@ -1786,7 +1786,7 @@ static decision_function svm_train_one(
 		}
 	}
 
-	info("nSV = %d, nBSV = %d\n",nSV,nBSV);
+	//info("nSV = %d, nBSV = %d\n",nSV,nBSV);
 
 	decision_function f;
 	f.alpha = alpha;
@@ -2369,7 +2369,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 			nz_count[i] = nSV;
 		}
 
-		info("Total nSV = %d\n",total_sv);
+		//info("Total nSV = %d\n",total_sv);
 
 		model->l = total_sv;
 		model->SV = Malloc(svm_node *,total_sv);
