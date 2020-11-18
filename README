@@ -143,7 +143,7 @@ options:
 	2 -- one-class SVM
 	3 -- epsilon-SVR	(regression)
 	4 -- nu-SVR		(regression)
-    5 -- SVDD    (sphere one-class, can handle both positive and negative samples)
+	5 -- SVDD    (sphere one-class, can handle both positive and negative samples)
 -t kernel_type : set type of kernel function (default 2)
 	0 -- linear: u'*v
 	1 -- polynomial: (gamma*u'*v + coef0)^degree
