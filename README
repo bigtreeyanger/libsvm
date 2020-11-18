@@ -143,6 +143,7 @@ options:
 	2 -- one-class SVM
 	3 -- epsilon-SVR	(regression)
 	4 -- nu-SVR		(regression)
+    5 -- SVDD    (sphere one-class, can handle both positive and negative samples)
 -t kernel_type : set type of kernel function (default 2)
 	0 -- linear: u'*v
 	1 -- polynomial: (gamma*u'*v + coef0)^degree
@@ -152,7 +153,8 @@ options:
 -d degree : set degree in kernel function (default 3)
 -g gamma : set gamma in kernel function (default 1/num_features)
 -r coef0 : set coef0 in kernel function (default 0)
--c cost : set the parameter C of C-SVC, epsilon-SVR, and nu-SVR (default 1)
+-c cost : set the parameter C of C-SVC, epsilon-SVR, nu-SVR and SVDD (positive samples) (default 1)
+-cn negative cost: set the parameter C for negative samples in SVDD (default 0)
 -n nu : set the parameter nu of nu-SVC, one-class SVM, and nu-SVR (default 0.5)
 -p epsilon : set the epsilon in loss function of epsilon-SVR (default 0.1)
 -m cachesize : set cache memory size in MB (default 100)
